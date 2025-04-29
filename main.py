@@ -22,12 +22,23 @@ def graph_to_json(graph):
 
     # Extrair arestas (ruas)
     for u, v, key, data in graph.edges(keys=True, data=True):
+        # Tratando o maxspeed
+        maxspeed = data.get("maxspeed", 50)  # Se não tiver, assume 50 km/h
+        if isinstance(maxspeed, list):
+            maxspeed = maxspeed[0]  # Se for lista, pega o primeiro valor
+        try:
+            maxspeed = float(maxspeed)  # Converte para número se possível
+        except:
+            maxspeed = 50  # Se der erro, assume 50
+
         edges.append({
             "id": f"{u}-{v}-{key}",
             "source": str(u),
             "target": str(v),
             "length": data.get("length", 0.0),  # Comprimento em metros
-            "travel_time": 0.0  # Será calculado no Java
+            "travel_time": 0.0,  # Será calculado no Java
+            "oneway": data.get("oneway", False),
+            "maxspeed": maxspeed  # Adicionado aqui!
         })
 
     return {"nodes": nodes, "edges": edges}
@@ -36,7 +47,7 @@ def graph_to_json(graph):
 graph_json = graph_to_json(graph)
 
 # Salvar como arquivo JSON
-with open("teresina.json", "w") as f:
+with open("teresina1.json", "w") as f:
     json.dump(graph_json, f, indent=2)
 
 #Visualizar o grafo para verificar
