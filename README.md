@@ -146,7 +146,7 @@ Representa os semáforos nos cruzamentos.
   - Gera JSON com nós, arestas, e semáforos.
   - Infere direções dos semáforos (`forward`, `backward`, `north`, `south`, `east`, `west`, `unknown`) com base em arestas `oneway` e coordenadas.
   - Salva o JSON em `mapa/CentroTeresinaPiauíBrazil.json`.
-  - Exibe uma visualização do grafo (azul, com nós pequenos).
+  - Exibe uma visualização do grafo (amarelo, com nós pequenos).
 - **Vantagens**:
   - Direções de semáforos mais variadas e precisas.
   - Ideal para simulações complexas de tráfego.
