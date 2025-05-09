@@ -8,7 +8,7 @@ O objetivo é criar uma representação estruturada da rede viária de Teresina,
 
 ## Scripts
 
-O repositório contém dois scripts Python:
+O repositório contém dois scripts Python:A
 
 1. **`process_osmnx_map_backward.py`**:
    - Versão inicial do script que extrai dados do OSM para Teresina.
@@ -70,7 +70,14 @@ Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/CentroTeresinaPiau
    - Uma visualização do grafo de ruas será exibida (fechada automaticamente ao continuar).
    - Informações dos semáforos serão impressas no console.
 
-3. **Uso do JSON**:
+3. **Personalização da região**:
+   - Os scripts podem ser usados para extrair dados de outros bairros de Teresina, como Dirceu ou Joquei, ou da cidade inteira. Para isso, altere a variável `place_name` no início do script. Exemplos:
+     - Para o bairro Dirceu: `place_name = "Dirceu, Teresina, Piauí, Brazil"`
+     - Para o bairro Joquei: `place_name = "Joquei, Teresina, Piauí, Brazil"`
+     - Para a cidade inteira: `place_name = "Teresina, Piauí, Brazil"`
+   - O arquivo JSON gerado terá o nome ajustado automaticamente com base no `place_name` (ex.: `mapa/DirceuTeresinaPiauíBrazil.json`).
+
+4. **Uso do JSON**:
    - O arquivo JSON pode ser carregado em um backend (ex.: Java/Spring Boot) para:
      - Calcular rotas com Dijkstra usando `nodes` e `edges`.
      - Otimizar semáforos com base em `traffic_lights` (ex.: priorizar direções ou destinos).
