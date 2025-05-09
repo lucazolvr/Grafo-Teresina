@@ -1,10 +1,10 @@
-# Simulação de Tráfego Urbano - Teresina, Piauí
+# Grafo-Teresina
 
 Este projeto contém scripts Python para extrair e processar dados de ruas e semáforos de Teresina, Piauí, Brazil, usando o OpenStreetMap (OSM) e a biblioteca OSMnx. Os scripts geram um arquivo JSON com nós (interseções), arestas (vias), e semáforos, que pode ser usado para simulações de tráfego urbano, cálculo de rotas com o algoritmo de Dijkstra, e otimização de semáforos.
 
 ## Objetivo
 
-O objetivo é criar uma representação estruturada da rede viária de Teresina, incluindo informações detalhadas sobre semáforos (como direção do fluxo e destino), para suportar simulações de tráfego e otimizações em um sistema backend. O projeto é útil para estudos de mobilidade urbana, planejamento de tráfego, e desenvolvimento de algoritmos de roteamento.
+O objetivo é criar uma representação estruturada da rede viária de Teresina, incluindo informações detalhadas sobre interseções, vias, e semáforos, para suportar simulações de tráfego e otimizações em um sistema backend. O projeto é útil para estudos de mobilidade urbana, planejamento de tráfego, e desenvolvimento de algoritmos de roteamento.
 
 ## Scripts
 
@@ -20,10 +20,7 @@ O repositório contém dois scripts Python:
    - Inclui uma lógica de inferência de direções mais equilibrada, gerando direções como `forward`, `backward`, `north`, `south`, `east`, `west`, ou `unknown` para os semáforos.
    - Usa informações de arestas `oneway` e coordenadas para determinar direções, compensando a ausência da tag `traffic_signals:direction` no OSM.
 
-Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/TeresinaPiauíBrazil.json`) com a seguinte estrutura:
-- `nodes`: Lista de interseções com `id`, `latitude`, e `longitude`.
-- `edges`: Lista de vias com `id`, `source`, `target`, `length`, `travel_time`, `oneway`, e `maxspeed`.
-- `traffic_lights`: Lista de semáforos com `id`, `latitude`, `longitude`, e `attributes` (`highway`, `destination`, `ref`, `traffic_signals:direction`).
+Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/CentroTeresinaPiauíBrazil.json`).
 
 ## Pré-requisitos
 
@@ -69,7 +66,7 @@ Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/TeresinaPiauíBraz
      ```
 
 2. **Saída**:
-   - Um arquivo JSON será gerado em `mapa/CentroTeresinaPiauiBrazil.json`.
+   - Um arquivo JSON será gerado em `mapa/CentroTeresinaPiauíBrazil.json`.
    - Uma visualização do grafo de ruas será exibida (fechada automaticamente ao continuar).
    - Informações dos semáforos serão impressas no console.
 
@@ -77,23 +74,69 @@ Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/TeresinaPiauíBraz
    - O arquivo JSON pode ser carregado em um backend (ex.: Java/Spring Boot) para:
      - Calcular rotas com Dijkstra usando `nodes` e `edges`.
      - Otimizar semáforos com base em `traffic_lights` (ex.: priorizar direções ou destinos).
-   - Exemplo de estrutura do JSON:
-     ```json
-     {
-       "nodes": [
-         {"id": "123", "latitude": -5.089, "longitude": -42.801},
-         ...
-       ],
-       "edges": [
-         {"id": "123-456-0", "source": "123", "target": "456", "length": 100.0, "travel_time": 0.0, "oneway": false, "maxspeed": 50.0},
-         ...
-       ],
-       "traffic_lights": [
-         {"id": "1524484929", "latitude": -5.0812959, "longitude": -42.8106077, "attributes": {"highway": "traffic_signals", "destination": null, "ref": null, "traffic_signals:direction": "north"}},
-         ...
-       ]
-     }
-     ```
+   - Veja a seção "Estrutura do JSON" para detalhes dos atributos.
+
+## Estrutura do JSON
+
+O JSON gerado contém três seções principais: `nodes`, `edges`, e `traffic_lights`. Abaixo está a descrição detalhada de cada atributo:
+
+### `nodes`
+Representa as interseções ou pontos da rede viária.
+- **`id`**: Identificador único do nó (string), extraído do OSM.
+- **`latitude`**: Coordenada latitudinal do nó (float), em graus.
+- **`longitude`**: Coordenada longitudinal do nó (float), em graus.
+- **Uso**: Define os pontos do grafo para cálculo de rotas e mapeamento geográfico.
+
+### `edges`
+Representa as vias que conectam os nós.
+- **`id`**: Identificador único da aresta (string), no formato `source-target-key`.
+- **`source`**: ID do nó de origem da aresta (string).
+- **`target`**: ID do nó de destino da aresta (string).
+- **`length`**: Comprimento da via em metros (float), usado para calcular distâncias.
+- **`travel_time`**: Tempo de viagem em segundos (float), inicialmente 0.0 (pode ser calculado no backend com base em `length` e `maxspeed`).
+- **`oneway`**: Indica se a via é de mão única (boolean, `true` para mão única, `false` para bidirecional).
+- **`maxspeed`**: Velocidade máxima da via em km/h (float), assume 50 km/h se não disponível no OSM.
+- **Uso**: Fornece a estrutura do grafo para algoritmos de roteamento (ex.: Dijkstra) e análise de tráfego.
+
+### `traffic_lights`
+Representa os semáforos nos cruzamentos.
+- **`id`**: Identificador único do semáforo (string), geralmente o ID do nó correspondente.
+- **`latitude`**: Coordenada latitudinal do semáforo (float).
+- **`longitude`**: Coordenada longitudinal do semáforo (float).
+- **`attributes`**:
+  - **`highway`**: Tipo do nó (string), sempre `traffic_signals` para semáforos.
+  - **`destination`**: Destino indicado pelo semáforo (string ou `null`), como "downtown" ou "airport", útil para priorizar rotas.
+  - **`ref`**: Referência do semáforo (string ou `null`), como um código identificador (ex.: "TS001").
+  - **`traffic_signals:direction`**: Direção do fluxo controlado pelo semáforo (string), pode ser `forward`, `backward`, `north`, `south`, `east`, `west`, ou `unknown`. Inferida com base em arestas `oneway` e coordenadas, já que o OSM para Teresina não fornece essa tag.
+- **Uso**: Permite modelar atrasos em cruzamentos, priorizar tempos de verde, e otimizar fluxos de tráfego.
+
+### Exemplo de JSON
+```json
+{
+  "nodes": [
+    {"id": "123", "latitude": -5.089, "longitude": -42.801},
+    ...
+  ],
+  "edges": [
+    {"id": "123-456-0", "source": "123", "target": "456", "length": 100.0, "travel_time": 0.0, "oneway": false, "maxspeed": 50.0},
+    ...
+  ],
+  "traffic_lights": [
+    {
+      "id": "1524484929",
+      "latitude": -5.0812959,
+      "longitude": -42.8106077,
+      "attributes": {
+        "highway": "traffic_signals",
+        "destination": null,
+        "ref": null,
+        "traffic_signals:direction": "north"
+      }
+    },
+    ...
+  ]
+}
+```
 
 ## Estrutura dos scripts
 
@@ -102,7 +145,7 @@ Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/TeresinaPiauíBraz
   - Extrai o grafo de ruas de Teresina usando OSMnx.
   - Gera JSON com nós, arestas, e semáforos.
   - Infere direções dos semáforos (`forward`, `backward`, `north`, `south`, `east`, `west`, `unknown`) com base em arestas `oneway` e coordenadas.
-  - Salva o JSON em `mapa/TeresinaPiauíBrazil.json`.
+  - Salva o JSON em `mapa/CentroTeresinaPiauíBrazil.json`.
   - Exibe uma visualização do grafo (azul, com nós pequenos).
 - **Vantagens**:
   - Direções de semáforos mais variadas e precisas.
@@ -118,12 +161,13 @@ Ambos os scripts geram um arquivo JSON na pasta `mapa` (`mapa/TeresinaPiauíBraz
 ## Notas
 
 - **Dados do OSM**:
-  - Os dados são extraídos do OpenStreetMap, que pode ter informações incompletas para Teresina (ex.: ausência de `traffic_signals:direction`). O script principal contorna isso com inferência de direções.
+  - Os dados são extraídos do OpenStreetMap, que pode ter informações incompletas para Teresina (ex.: ausência de `traffic_signals:direction`, `destination`, ou `ref`). O script principal contorna isso com inferência de direções.
   - Se você tiver dados locais (ex.: da prefeitura), pode integrá-los ao JSON.
 
 - **Limitações**:
   - A inferência de direções é uma aproximação e pode não ser 100% precisa em cruzamentos complexos.
   - O script assume `maxspeed=50 km/h` quando o dado não está disponível.
+  - O atributo `travel_time` é inicializado como 0.0 e deve ser calculado no backend.
 
 - **Futuras melhorias**:
   - Integrar dados externos de tráfego.
